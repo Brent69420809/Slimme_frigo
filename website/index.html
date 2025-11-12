@@ -1,50 +1,43 @@
-<!-- FILE: index.html -->
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Aiva — Slimme Frigo Demo</title>
-  <link rel="stylesheet" href="css/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aiva — Slimme Frigo Recepten</title>
+  <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
   <header class="site-header">
     <div class="container header-inner">
       <div class="brand">
-        <div class="logo">A</div>
+        <img src="./aiva_logo.png" alt="Aiva logo" class="brand-logo">
         <div class="brand-text">
-          <h1>Aiva</h1>
-          <p class="tag">Your everyday smart assistant</p>
-        </div>
+        <h1>Aiva</h1>
+        <p class="tag">Your everyday smart assistant</p>
       </div>
+    </div>
+
       <nav class="nav">
         <a href="#">Home</a>
         <a href="#inventory">Voorraad</a>
-        <a href="#about">Over</a>
+        <a href="#recipes">Recepten</a>
       </nav>
     </div>
   </header>
 
   <main class="container main-grid">
-    <section class="card intro">
-      <h2>Welkom bij Aiva</h2>
-      <p>Dit is een eenvoudige demo-site die toont hoe jullie slimme frigo werkt. Je kan items toevoegen, en simuleren dat de frigo een product aanwijst.</p>
-      <div class="controls">
-        <input id="searchInput" placeholder="Zoek product (bv. melk)" />
-        <button id="highlightBtn">Aanwijzen</button>
-      </div>
-    </section>
-
     <section id="inventory" class="card inventory">
-      <h3>Voorraad</h3>
+      <h2>Voorraad</h2>
+      <p>Voeg toe wat er in je slimme frigo zit. Daarna kan je zien welke recepten je kan maken!</p>
+
       <table class="inventory-table">
         <thead>
           <tr><th>Product</th><th>Aantal</th><th>Locatie</th><th>Actie</th></tr>
         </thead>
         <tbody id="inventoryBody">
-          <tr data-name="melk"><td>Melk 1L</td><td>2</td><td>Vak A1</td><td><button class="pick">Vraag</button></td></tr>
-          <tr data-name="yoghurt"><td>Yoghurt</td><td>4</td><td>Vak B2</td><td><button class="pick">Vraag</button></td></tr>
-          <tr data-name="sap"><td>Appelsap</td><td>1</td><td>Vak C1</td><td><button class="pick">Vraag</button></td></tr>
+          <tr data-name="melk"><td>Melk 1L</td><td>2</td><td>Vak A1</td><td><button class="remove">Verwijder</button></td></tr>
+          <tr data-name="eieren"><td>Eieren</td><td>6</td><td>Vak B1</td><td><button class="remove">Verwijder</button></td></tr>
+          <tr data-name="kaas"><td>Kaas</td><td>1</td><td>Vak C1</td><td><button class="remove">Verwijder</button></td></tr>
         </tbody>
       </table>
 
@@ -54,82 +47,23 @@
         <input id="loc" placeholder="Locatie (bv. Vak A1)" required />
         <button type="submit">Toevoegen</button>
       </form>
+
+      <button id="showRecipes" class="recipe-btn">Toon mogelijke recepten</button>
     </section>
 
-    <section id="prototype" class="card prototype">
-      <h3>Prototype (karton)</h3>
-      <p>Hier zie je een simpele visualisatie van het kartonmodel. Klik op een item in de voorraad of gebruik de zoekbalk om te simuleren dat Aiva het vak aanstipt.</p>
-      <div class="fridge-visual" id="fridgeVisual">
-        <div class="cell" data-location="Vak A1">A1</div>
-        <div class="cell" data-location="Vak B1">B1</div>
-        <div class="cell" data-location="Vak C1">C1</div>
-        <div class="cell" data-location="Vak A2">A2</div>
-        <div class="cell" data-location="Vak B2">B2</div>
-        <div class="cell" data-location="Vak C2">C2</div>
-      </div>
+    <section id="recipes" class="card recipes">
+      <h2>Mogelijke Recepten</h2>
+      <p>Klik op een recept om het te bekijken.</p>
+      <ul id="recipeList" class="recipe-list"></ul>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <p>© Aiva — Demo project</p>
+      <p>© Aiva — Schoolproject</p>
     </div>
   </footer>
 
-  <script>
-    // Kleine interactiviteit voor demo-doeleinden
-    const highlightBtn = document.getElementById('highlightBtn');
-    const searchInput = document.getElementById('searchInput');
-    const inventoryBody = document.getElementById('inventoryBody');
-    const fridgeVisual = document.getElementById('fridgeVisual');
-
-    function clearHighlights() {
-      document.querySelectorAll('.cell.highlight').forEach(el => el.classList.remove('highlight'));
-      document.querySelectorAll('tr.highlight').forEach(el => el.classList.remove('highlight'));
-    }
-
-    highlightBtn.addEventListener('click', () => {
-      const q = searchInput.value.trim().toLowerCase();
-      clearHighlights();
-      if (!q) return;
-      // markeer rijen
-      document.querySelectorAll('#inventoryBody tr').forEach(row => {
-        const name = row.dataset.name || '';
-        if (name.includes(q)) {
-          row.classList.add('highlight');
-          // vind locatie-tekst in dezelfde rij
-          const loc = row.cells[2].textContent.trim();
-          const cell = document.querySelector('.fridge-visual .cell[data-location="' + loc + '"]');
-          if (cell) cell.classList.add('highlight');
-        }
-      });
-    });
-
-    inventoryBody.addEventListener('click', (e) => {
-      if (e.target.classList.contains('pick')) {
-        const row = e.target.closest('tr');
-        const name = row.cells[0].textContent;
-        const loc = row.cells[2].textContent;
-        clearHighlights();
-        row.classList.add('highlight');
-        const cell = document.querySelector('.fridge-visual .cell[data-location="' + loc + '"]');
-        if (cell) cell.classList.add('highlight');
-        alert('Aiva wijst: ' + name + ' (' + loc + ')');
-      }
-    });
-
-    document.getElementById('addForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const name = document.getElementById('name').value.trim();
-      const qty = document.getElementById('qty').value.trim();
-      const loc = document.getElementById('loc').value.trim();
-      if (!name || !qty || !loc) return;
-      const tr = document.createElement('tr');
-      tr.dataset.name = name.toLowerCase();
-      tr.innerHTML = '<td>' + name + '</td><td>' + qty + '</td><td>' + loc + '</td><td><button class="pick">Vraag</button></td>';
-      inventoryBody.appendChild(tr);
-      e.target.reset();
-    });
-  </script>
+  <script src="./javascript/script.js"></script>
 </body>
 </html>
