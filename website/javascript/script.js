@@ -1,4 +1,6 @@
-// --- Receptendata ---
+// --------------------------
+// Receptendata
+// --------------------------
 const recipes = [
   {
     id: 'pannenkoeken',
@@ -15,9 +17,9 @@ const recipes = [
     name: 'Omelet met kaas',
     ingredients: ['eieren', 'kaas', 'boter'],
     steps: [
-      'Klop de eieren los en voeg zout toe.',
+      'Klop de eieren los.',
       'Smelt boter in de pan.',
-      'Giet de eieren erin en voeg kaas toe, vouw dubbel als het stolt.'
+      'Giet de eieren erin en voeg kaas toe.'
     ]
   },
   {
@@ -32,64 +34,166 @@ const recipes = [
   }
 ];
 
-// --- Inventaris functionaliteit (enkel op index.html) ---
-const addForm = document.getElementById('addForm');
-const inventoryBody = document.getElementById('inventoryBody');
-const recipeList = document.getElementById('recipeList');
-const showRecipesBtn = document.getElementById('showRecipes');
 
-if (addForm) {
-  addForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const name = document.getElementById('name').value.trim().toLowerCase();
-    const qty = document.getElementById('qty').value.trim();
-    const loc = document.getElementById('loc').value.trim();
-    if (!name || !qty || !loc) return;
-    const tr = document.createElement('tr');
-    tr.dataset.name = name;
-    tr.innerHTML = `<td>${name}</td><td>${qty}</td><td>${loc}</td><td><button class="remove">Verwijder</button></td>`;
-    inventoryBody.appendChild(tr);
-    addForm.reset();
-  });
+// --------------------------
+// Helpers
+// --------------------------
+const norm = str => String(str).trim().toLowerCase();
 
-  inventoryBody.addEventListener('click', e => {
-    if (e.target.classList.contains('remove')) {
-      e.target.closest('tr').remove();
-    }
-  });
+function loadInventory() {
+  return JSON.parse(localStorage.getItem("inventory")) || [];
+}
 
-  showRecipesBtn.addEventListener('click', () => {
-    const currentItems = Array.from(document.querySelectorAll('#inventoryBody tr')).map(r => r.dataset.name);
-    recipeList.innerHTML = '';
-    recipes.forEach(r => {
-      const hasIngredients = r.ingredients.every(i => currentItems.includes(i));
-      const li = document.createElement('li');
-      li.className = hasIngredients ? 'match' : '';
-      li.innerHTML = `<span>${r.name}</span><a href="recept.html?id=${r.id}">Bekijk</a>`;
-      recipeList.appendChild(li);
-    });
+function saveInventory(items) {
+  localStorage.setItem("inventory", JSON.stringify(items));
+}
+
+
+// --------------------------
+// Sync DOM -> Storage (éénmalig)
+// --------------------------
+function initializeStorageFromDOM() {
+  const stored = loadInventory();
+  if (stored.length > 0) return; // storage bestaat al → niets doen
+
+  const rows = document.querySelectorAll("#inventoryBody tr");
+  const items = [...rows].map(r => ({
+    name: norm(r.dataset.name),
+    qty: r.children[1].textContent.trim(),
+    loc: r.children[2].textContent.trim()
+  }));
+
+  saveInventory(items);
+}
+
+
+// --------------------------
+// Render voorraad
+// --------------------------
+function renderInventory() {
+  const tbody = document.getElementById("inventoryBody");
+  tbody.innerHTML = "";
+
+  loadInventory().forEach(item => {
+    const tr = document.createElement("tr");
+    tr.dataset.name = item.name;
+    tr.innerHTML = `
+      <td>${item.name}</td>
+      <td>${item.qty}</td>
+      <td>${item.loc}</td>
+      <td><button class="remove">Verwijder</button></td>
+    `;
+    tbody.appendChild(tr);
   });
 }
 
-// --- Recept detailpagina ---
-const recipeTitle = document.getElementById('recipeTitle');
-if (recipeTitle) {
-  const params = new URLSearchParams(window.location.search);
-  const recipeId = params.get('id');
-  const recipe = recipes.find(r => r.id === recipeId);
-  if (recipe) {
-    recipeTitle.textContent = recipe.name;
-    const ingredientsList = document.getElementById('recipeIngredients');
-    recipe.ingredients.forEach(i => {
-      const li = document.createElement('li');
-      li.textContent = i;
-      ingredientsList.appendChild(li);
+
+// --------------------------
+// MAIN LOGIC INDEX PAGINA
+// --------------------------
+if (document.getElementById("inventoryBody")) {
+
+  initializeStorageFromDOM();
+  renderInventory();
+
+  // Toevoegen
+  document.getElementById("addForm").addEventListener("submit", e => {
+    e.preventDefault();
+
+    const name = norm(document.getElementById("name").value);
+    const qty = document.getElementById("qty").value.trim();
+    const loc = document.getElementById("loc").value.trim();
+
+    const inv = loadInventory();
+    inv.push({ name, qty, loc });
+    saveInventory(inv);
+
+    renderInventory();
+    e.target.reset();
+  });
+
+  // Verwijderen
+  document.getElementById("inventoryBody").addEventListener("click", e => {
+    if (!e.target.classList.contains("remove")) return;
+
+    const tr = e.target.closest("tr");
+    const name = norm(tr.dataset.name);
+
+    let inv = loadInventory();
+    inv = inv.filter(i => i.name !== name);
+    saveInventory(inv);
+
+    renderInventory();
+  });
+
+  // Recepten tonen
+  document.getElementById("showRecipes").addEventListener("click", () => {
+    const currentItems = loadInventory().map(i => i.name);
+    const recipeList = document.getElementById("recipeList");
+    recipeList.innerHTML = "";
+
+    recipes.forEach(r => {
+      const match = r.ingredients.some(i => currentItems.includes(norm(i)));
+      if (!match) return;
+
+      const li = document.createElement("li");
+      li.className = "match";
+      li.innerHTML = `
+        <span>${r.name}</span>
+        <a href="recept.html?id=${r.id}">Bekijk</a>
+      `;
+      recipeList.appendChild(li);
     });
-    const stepsList = document.getElementById('recipeSteps');
-    recipe.steps.forEach(s => {
-      const li = document.createElement('li');
-      li.textContent = s;
-      stepsList.appendChild(li);
+
+    if (recipeList.innerHTML.trim() === "") {
+      recipeList.innerHTML = `<li>Geen recepten gevonden.</li>`;
+    }
+  });
+}
+
+
+// --------------------------
+// RECEPT DETAIL PAGINA
+// --------------------------
+if (document.getElementById("recipeTitle")) {
+  const params = new URLSearchParams(location.search);
+  const r = recipes.find(x => x.id === params.get("id"));
+
+  if (r) {
+    document.getElementById("recipeTitle").textContent = r.name;
+
+    const inventoryNames = loadInventory().map(i => i.name);
+    const have = r.ingredients.filter(i => inventoryNames.includes(norm(i)));
+    const missing = r.ingredients.filter(i => !inventoryNames.includes(norm(i)));
+
+    const ingList = document.getElementById("recipeIngredients");
+    ingList.innerHTML = "";
+
+    have.forEach(i => {
+      const li = document.createElement("li");
+      li.textContent = i + " ✔";
+      li.style.color = "green";
+      ingList.appendChild(li);
     });
+
+    if (missing.length > 0) {
+      const title = document.createElement("h3");
+      title.textContent = "Ingrediënten die je nog nodig hebt:";
+      ingList.insertAdjacentElement("afterend", title);
+
+      const missingUl = document.createElement("ul");
+      missing.forEach(i => {
+        const li = document.createElement("li");
+        li.textContent = i + " ✘";
+        li.style.color = "red";
+        missingUl.appendChild(li);
+      });
+
+      title.insertAdjacentElement("afterend", missingUl);
+    }
+
+    const stepsList = document.getElementById("recipeSteps");
+    stepsList.innerHTML = "";
+    r.steps.forEach(s => stepsList.appendChild(Object.assign(document.createElement("li"), { textContent: s })));
   }
 }
