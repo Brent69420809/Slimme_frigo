@@ -18,14 +18,14 @@
       </div>
 
       <nav class="nav">
-        <a href="#">Home</a>
+        <a href="./homepage.html">Home</a>
         <a href="#inventory">Voorraad</a>
-        <a href="#recipes">Recepten</a>
+        <a href="./recept_list.html">Recepten</a>
       </nav>
     </div>
   </header>
 
-  <main class="container main-grid">
+  <main class="container">
     <section id="inventory" class="card inventory">
       <h2>Voorraad</h2>
       <p>Voeg toe wat er in je slimme frigo zit. Daarna kan je zien welke recepten je kan maken!</p>
@@ -43,18 +43,41 @@
 
       <form id="addForm" class="add-form">
         <input id="name" placeholder="Productnaam" required />
-        <input id="qty" type="number" min="1" placeholder="Aantal" required />
-        <input id="loc" placeholder="Locatie (bv. Vak A1)" required />
+
+        <div class="row">
+          <input id="qty" type="number" min="1" placeholder="Aantal" required />
+          <select id="unit">
+            <option value="stuks">stuks</option>
+            <option value="liter">liter</option>
+            <option value="kg">kg</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <select id="locLetter">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+
+          <select id="locNumber">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+          </select>
+        </div>
+
         <button type="submit">Toevoegen</button>
       </form>
 
-      <button id="showRecipes" class="recipe-btn">Toon mogelijke recepten</button>
-    </section>
-
-    <section id="recipes" class="card recipes">
-      <h2>Mogelijke Recepten</h2>
-      <p>Klik op een recept om het te bekijken.</p>
-      <ul id="recipeList" class="recipe-list"></ul>
+      <!-- Verwijderd: Recepten sectie en knop -->
     </section>
   </main>
 

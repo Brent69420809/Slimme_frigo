@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recept Detail</title>
+  <title>Mogelijke Recepten</title>
   <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
@@ -20,21 +20,17 @@
       <nav class="nav">
         <a href="./homepage.html">Home</a>
         <a href="./index.html">Voorraad</a>
-        <a href="./recept_list.html">Recepten</a>
+        <a href="#recipes">Recepten</a>
       </nav>
     </div>
   </header>
 
   <main class="container">
-    <section class="card">
-      <h2 id="recipeTitle">Receptnaam</h2>
-      <h3>Ingrediënten</h3>
-      <ul id="recipeIngredients"></ul>
-
-      <h3>Stappen</h3>
-      <ol id="recipeSteps"></ol>
-
-      <button onclick="window.location.href='./recept_list.html'" class="back-btn">← Terug naar receptenlijst</button>
+    <section id="recipes" class="card recipes">
+      <h2>Mogelijke Recepten</h2>
+      <p>Klik op een recept om het te bekijken.</p>
+      <ul id="recipeList" class="recipe-list"></ul>
+      <button onclick="window.location.href='./homepage.html'" class="back-btn">← Terug naar overzicht</button>
     </section>
   </main>
 

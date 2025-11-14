@@ -34,7 +34,6 @@ const recipes = [
   }
 ];
 
-
 // --------------------------
 // Helpers
 // --------------------------
@@ -48,13 +47,12 @@ function saveInventory(items) {
   localStorage.setItem("inventory", JSON.stringify(items));
 }
 
-
 // --------------------------
 // Sync DOM -> Storage (éénmalig)
 // --------------------------
 function initializeStorageFromDOM() {
   const stored = loadInventory();
-  if (stored.length > 0) return; // storage bestaat al → niets doen
+  if (stored.length > 0) return;
 
   const rows = document.querySelectorAll("#inventoryBody tr");
   const items = [...rows].map(r => ({
@@ -66,33 +64,82 @@ function initializeStorageFromDOM() {
   saveInventory(items);
 }
 
-
 // --------------------------
-// Render voorraad
+// Render voorraad (alleen voor index.html)
 // --------------------------
 function renderInventory() {
   const tbody = document.getElementById("inventoryBody");
+  if (!tbody) return; // Alleen uitvoeren als tbody bestaat
+
   tbody.innerHTML = "";
 
   loadInventory().forEach(item => {
     const tr = document.createElement("tr");
     tr.dataset.name = item.name;
-    tr.innerHTML = `
-      <td>${item.name}</td>
-      <td>${item.qty}</td>
-      <td>${item.loc}</td>
-      <td><button class="remove">Verwijder</button></td>
-    `;
+
+    const tdName = document.createElement("td");
+    tdName.textContent = item.name;
+    tr.appendChild(tdName);
+
+    const tdQty = document.createElement("td");
+    tdQty.textContent = item.qty;
+    tr.appendChild(tdQty);
+
+    const tdLoc = document.createElement("td");
+    tdLoc.textContent = item.loc;
+    tr.appendChild(tdLoc);
+
+    const tdButton = document.createElement("td");
+    const button = document.createElement("button");
+    button.className = "remove";
+    button.textContent = "Verwijder";
+    tdButton.appendChild(button);
+    tr.appendChild(tdButton);
+
     tbody.appendChild(tr);
   });
 }
 
+// --------------------------
+// Render recepten lijst (voor recept_list.html)
+// --------------------------
+function renderRecipeList() {
+  const recipeList = document.getElementById("recipeList");
+  if (!recipeList) return; // Alleen uitvoeren als recipeList bestaat
+
+  recipeList.innerHTML = "";
+  const currentItems = loadInventory().map(i => i.name);
+
+  recipes.forEach(r => {
+    const match = r.ingredients.some(i => currentItems.includes(norm(i)));
+    if (!match) return;
+
+    const li = document.createElement("li");
+    li.className = "match";
+
+    const span = document.createElement("span");
+    span.textContent = r.name;
+    li.appendChild(span);
+
+    const a = document.createElement("a");
+    a.href = "recept.html?id=" + r.id;
+    a.textContent = "Bekijk";
+    li.appendChild(a);
+
+    recipeList.appendChild(li);
+  });
+
+  if (recipeList.children.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "Geen recepten gevonden.";
+    recipeList.appendChild(li);
+  }
+}
 
 // --------------------------
-// MAIN LOGIC INDEX PAGINA
+// MAIN LOGIC INDEX PAGINA (alleen voorraad)
 // --------------------------
 if (document.getElementById("inventoryBody")) {
-
   initializeStorageFromDOM();
   renderInventory();
 
@@ -101,8 +148,8 @@ if (document.getElementById("inventoryBody")) {
     e.preventDefault();
 
     const name = norm(document.getElementById("name").value);
-    const qty = document.getElementById("qty").value.trim();
-    const loc = document.getElementById("loc").value.trim();
+    const qty = document.getElementById("qty").value.trim() + " " + document.getElementById("unit").value;
+    const loc = document.getElementById("locLetter").value + document.getElementById("locNumber").value;
 
     const inv = loadInventory();
     inv.push({ name, qty, loc });
@@ -125,32 +172,14 @@ if (document.getElementById("inventoryBody")) {
 
     renderInventory();
   });
-
-  // Recepten tonen
-  document.getElementById("showRecipes").addEventListener("click", () => {
-    const currentItems = loadInventory().map(i => i.name);
-    const recipeList = document.getElementById("recipeList");
-    recipeList.innerHTML = "";
-
-    recipes.forEach(r => {
-      const match = r.ingredients.some(i => currentItems.includes(norm(i)));
-      if (!match) return;
-
-      const li = document.createElement("li");
-      li.className = "match";
-      li.innerHTML = `
-        <span>${r.name}</span>
-        <a href="recept.html?id=${r.id}">Bekijk</a>
-      `;
-      recipeList.appendChild(li);
-    });
-
-    if (recipeList.innerHTML.trim() === "") {
-      recipeList.innerHTML = `<li>Geen recepten gevonden.</li>`;
-    }
-  });
 }
 
+// --------------------------
+// MAIN LOGIC RECEPT LIST PAGINA (automatisch laden)
+// --------------------------
+if (document.getElementById("recipeList")) {
+  renderRecipeList(); // Automatisch laden bij openen van pagina
+}
 
 // --------------------------
 // RECEPT DETAIL PAGINA
@@ -176,24 +205,26 @@ if (document.getElementById("recipeTitle")) {
       ingList.appendChild(li);
     });
 
-    if (missing.length > 0) {
-      const title = document.createElement("h3");
-      title.textContent = "Ingrediënten die je nog nodig hebt:";
-      ingList.insertAdjacentElement("afterend", title);
-
-      const missingUl = document.createElement("ul");
-      missing.forEach(i => {
-        const li = document.createElement("li");
-        li.textContent = i + " ✘";
-        li.style.color = "red";
-        missingUl.appendChild(li);
-      });
-
-      title.insertAdjacentElement("afterend", missingUl);
-    }
-
     const stepsList = document.getElementById("recipeSteps");
     stepsList.innerHTML = "";
-    r.steps.forEach(s => stepsList.appendChild(Object.assign(document.createElement("li"), { textContent: s })));
+
+    if (missing.length > 0) {
+      const extraInfo = document.createElement("p");
+      extraInfo.style.marginTop = "10px";
+
+      const strong = document.createElement("strong");
+      strong.textContent = "Niet in frigo: ";
+      extraInfo.appendChild(strong);
+
+      extraInfo.appendChild(document.createTextNode(missing.join(", ")));
+
+      stepsList.insertAdjacentElement("beforebegin", extraInfo);
+    }
+
+    r.steps.forEach(s => {
+      const li = document.createElement("li");
+      li.textContent = s;
+      stepsList.appendChild(li);
+    });
   }
 }
